@@ -2059,7 +2059,7 @@ static void curses_print_status(void)
 	mvwprintw(statuswin, 5, 0, " Block: %s...  Started: %s", current_hash, blocktime);
 	mvwhline(statuswin, 6, 0, '-', 80);
 	mvwhline(statuswin, logstart - 1, 0, '-', 80);
-	mvwprintw(statuswin, gpucursor - 1, 1, "[P]ool management %s[S]ettings [D]isplay options [Q]uit",
+	mvwprintw(statuswin, gpucursor - 1, 5, "[P]ool management %s[S]ettings [D]isplay options [Q]uit",
 		gpu_threads ? "[G]PU management " : "");
 	/* The window will be updated once we're done with all the devices */
 	wnoutrefresh(statuswin);
@@ -2067,13 +2067,25 @@ static void curses_print_status(void)
 
 static void curses_print_devstatus(int thr_id)
 {
+
+/***********
+     [P]ool management [G]PU management [S]ettings [D]isplay options [Q]uit
+GPU 0: 72.5C 4403RPM| 359.9/ 361.5Mh/s|A:    5435 R:     3 H:   0 U: 4.99/m I: 9
+GPU 1: 76.5C        | 359.8/ 361.8Mh/s|A:    5413 R:    10 H:  99 U: 4.97/m I: 9
+GPU 2: 72.5C 3617RPM| 364.6/ 361.3Mh/s|A:    5284 R:     7 H:   0 U: 4.85/m I: 9
+GPU 3: 67.5C        | 365.7/ 361.5Mh/s|A:    5349 R:     5 H:   0 U: 4.91/m I: 9
+GPU 4: 73.0C 3255RPM| 362.8/ 361.5Mh/s|A:    5391 R:     7 H:   0 U: 4.95/m I: 9
+GPU 5: 76.0C        | 368.0/ 361.7Mh/s|A:    5417 R:    10 H:   0 U: 4.97/m I: 9
+--------------------------------------------------------------------------------
+************/
+
 	if (thr_id >= 0 && thr_id < gpu_threads) {
 		int gpu = dev_from_id(thr_id);
 		struct cgpu_info *cgpu = &gpus[gpu];
 
 		cgpu->utility = cgpu->accepted / ( total_secs ? total_secs : 1 ) * 60;
 
-		mvwprintw(statuswin, gpucursor + gpu, 0, " GPU %d: ", gpu);
+		mvwprintw(statuswin, gpucursor + gpu, 0, "GPU%2d:", gpu);
 #ifdef HAVE_ADL
 		if (cgpu->has_adl) {
 			float gt = gpu_temp(gpu);
@@ -2081,27 +2093,27 @@ static void curses_print_devstatus(int thr_id)
 			int gp = gpu_fanpercent(gpu);
 
 			if (gt != -1)
-				wprintw(statuswin, "%5.1fC ", gt);
+				wprintw(statuswin, "%5.1fC", gt);
 			else
-				wprintw(statuswin, "       ");
+				wprintw(statuswin, "     ");
 			if (gf != -1)
-				wprintw(statuswin, "%4dRPM ", gf);
+				wprintw(statuswin, "%5dRPM", gf);
 			else if (gp != -1)
-				wprintw(statuswin, "%3d%%    ", gp);
+				wprintw(statuswin, "%7d%%", gp);
 			else
 				wprintw(statuswin, "        ");
 			wprintw(statuswin, "| ");
 		}
 #endif
 		if (cgpu->status == LIFE_DEAD)
-			wprintw(statuswin, "DEAD ");
+			wprintw(statuswin, " DEAD ");
 		else if (cgpu->status == LIFE_SICK)
-			wprintw(statuswin, "SICK ");
+			wprintw(statuswin, " SICK ");
 		else  if (!gpu_devices[gpu])
-			wprintw(statuswin, "OFF  ");
+			wprintw(statuswin, "  OFF ");
 		else
 			wprintw(statuswin, "%5.1f", cgpu->rolling);
-		wprintw(statuswin, "/%5.1fMh/s | A:%d R:%d HW:%d U:%.2f/m I:%d",
+		wprintw(statuswin, "/%6.1fMh/s|A:%8d R:%6d H:%4d U:%5.2f/m I:%2d",
 			cgpu->total_mhashes / total_secs,
 			cgpu->accepted, cgpu->rejected, cgpu->hw_errors,
 			cgpu->utility, gpus[gpu].intensity);
@@ -2112,7 +2124,7 @@ static void curses_print_devstatus(int thr_id)
 
 		cgpu->utility = cgpu->accepted / ( total_secs ? total_secs : 1 ) * 60;
 
-		mvwprintw(statuswin, cpucursor + cpu, 0, " CPU %d: %5.2f/%5.2fMh/s | A:%d R:%d U:%.2f/m",
+		mvwprintw(statuswin, cpucursor + cpu, 0, " CPU %d: %5.2f/%5.2fMh/s | A:%8d R:%6d U:%5.2f/m",
 			cpu, cgpu->rolling, cgpu->total_mhashes / total_secs,
 			cgpu->accepted, cgpu->rejected,
 			cgpu->utility);
